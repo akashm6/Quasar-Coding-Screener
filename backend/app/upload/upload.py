@@ -9,8 +9,6 @@ router = APIRouter()
 async def process_csv(csv_file: UploadFile = File(...)):
     df = pd.read_csv(csv_file.file, comment='#')
     #print("Read csv: ", df)
-    channels, time, ecg_map = process_signals(df)
+    plot_traces, ecg_map = process_signals(df)
     
-    time = time.tolist()
-    
-    return {"channels": channels, "ecg_map": ecg_map, "time": time}
+    return {"ecg_map": ecg_map, "traces": plot_traces}
