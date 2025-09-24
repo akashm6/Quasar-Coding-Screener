@@ -1,0 +1,1 @@
+// Sidebar for channel filtering and additional options on visualization page
