@@ -17,13 +17,16 @@ export default function SignalPlot({ data }: { data: any }) {
   const [normalize, setNormalize] = useState(false);
   const [selectedEEG, setSelectedEEG] = useState<string[]>([]);
   const [selectedECG, setSelectedECG] = useState<string[]>([]);
+  const [syncAxes, setSyncAxes] = useState(true);
 
   if (!data) return <p>No data available</p>;
 
   const normalizeArray = (arr: number[]) => {
     if (!normalize) return arr;
     const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
-    const std = Math.sqrt(arr.reduce((a, b) => a + (b - mean) ** 2, 0) / arr.length);
+    const std = Math.sqrt(
+      arr.reduce((a, b) => a + (b - mean) ** 2, 0) / arr.length
+    );
     return arr.map((v) => (v - mean) / (std || 1));
   };
 
@@ -97,7 +100,9 @@ export default function SignalPlot({ data }: { data: any }) {
     grid: { rows: 2, columns: 1, pattern: "independent" },
     xaxis: { title: { text: "Time (s)" } },
     yaxis: { title: { text: normalize ? "EEG (z-score)" : "EEG (µV)" } },
-    xaxis2: { title: { text: "Time (s)" } },
+    xaxis2: syncAxes
+      ? { matches: "x", title: { text: "Time (s)" } }
+      : { title: { text: "Time (s)" } },
     yaxis2: { title: { text: "ECG / CM" } },
     legend: { orientation: "h" },
     plot_bgcolor: "#fff",
@@ -115,14 +120,21 @@ export default function SignalPlot({ data }: { data: any }) {
           />
           Normalize EEG
         </label>
+        <Button variant="outline" onClick={() => setSyncAxes(!syncAxes)}>
+          {syncAxes ? "🔓 Unsync Time Axes" : "🔗 Sync Time Axes"}
+        </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">Select EEG Channels</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="max-h-64 overflow-y-auto">
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => toggleAll("EEG")}>
-              {selectedEEG.length === Object.keys(data.eeg_channels || {}).length
+            <DropdownMenuItem
+              onSelect={(e) => e.preventDefault()}
+              onClick={() => toggleAll("EEG")}
+            >
+              {selectedEEG.length ===
+              Object.keys(data.eeg_channels || {}).length
                 ? "Deselect All"
                 : "Select All"}
             </DropdownMenuItem>
@@ -131,7 +143,7 @@ export default function SignalPlot({ data }: { data: any }) {
                 key={ch}
                 checked={selectedEEG.includes(ch)}
                 onCheckedChange={() => toggleChannel(ch, "EEG")}
-                onSelect={(e) => e.preventDefault()} 
+                onSelect={(e) => e.preventDefault()}
               >
                 {ch}
               </DropdownMenuCheckboxItem>
@@ -144,7 +156,10 @@ export default function SignalPlot({ data }: { data: any }) {
             <Button variant="outline">Select ECG/CM Channels</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="max-h-64 overflow-y-auto">
-            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => toggleAll("ECG")}>
+            <DropdownMenuItem
+              onSelect={(e) => e.preventDefault()}
+              onClick={() => toggleAll("ECG")}
+            >
               {selectedECG.length ===
               [
                 ...Object.keys(data.ecg_channels || {}),
@@ -153,18 +168,19 @@ export default function SignalPlot({ data }: { data: any }) {
                 ? "Deselect All"
                 : "Select All"}
             </DropdownMenuItem>
-            {[...Object.keys(data.ecg_channels || {}), ...Object.keys(data.cm_channel || {})].map(
-              (ch) => (
-                <DropdownMenuCheckboxItem
-                  key={ch}
-                  checked={selectedECG.includes(ch)}
-                  onCheckedChange={() => toggleChannel(ch, "ECG")}
-                  onSelect={(e) => e.preventDefault()} 
-                >
-                  {ch}
-                </DropdownMenuCheckboxItem>
-              )
-            )}
+            {[
+              ...Object.keys(data.ecg_channels || {}),
+              ...Object.keys(data.cm_channel || {}),
+            ].map((ch) => (
+              <DropdownMenuCheckboxItem
+                key={ch}
+                checked={selectedECG.includes(ch)}
+                onCheckedChange={() => toggleChannel(ch, "ECG")}
+                onSelect={(e) => e.preventDefault()}
+              >
+                {ch}
+              </DropdownMenuCheckboxItem>
+            ))}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
