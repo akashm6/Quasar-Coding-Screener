@@ -98,8 +98,6 @@ curl -X POST http://{BACKEND_ROUTE}/upload \
 
 - Users can zoom, pan, reset axes, and compare any combination of EEG + ECG data over the same timeframes.
 
----
-
 ## Project Structure
 
 ```bash
@@ -167,3 +165,24 @@ pip install -r requirements.txt
 npm run dev # start frontend in frontend/
 uvicorn app.main:app --reload --port 8000 # start backend in backend/
 ```
+
+## Design Choices
+
+- **EEG vs ECG Scaling**  
+  EEG signals are often microvolt-scale with many channels, while ECG/CM signals are higher amplitude and usually fewer in number. To balance this, I separated EEG and ECG into **independent subplots**:
+
+  - EEG subplot supports optional **z-score normalization**, letting users compare relative activity across many electrodes regardless of absolute microvolt differences.
+  - ECG/CM subplot is left **raw**, since normalization there obscures clinically meaningful amplitude differences (e.g., R-peak height).
+  - The two plots can be **time-synced** for temporal correlation (e.g., brain activity relative to heartbeats).
+
+- **Channel Grouping**  
+  Channels are grouped into EEG, ECG, and CM explicitly in the backend to avoid user confusion. For instance, left/right ECG channels are mapped to `LEFT_ECG` / `RIGHT_ECG`, and `CM` is split into its own object. This reduces clutter and makes the dropdown filters more intuitive.
+
+## Future Work
+
+Due to time limits, I wasn’t able to implement several features that would further improve the tool:
+
+- **Undo / Reset Zoom** – A one-click “undo zoom” button (instead of relying on Plotly’s autoscale) would improve navigation, allowing for errant zooms to be undone.
+- **Multi-File Comparison** – Ability to upload and view two recordings side-by-side for session or subject comparisons.
+- **Export Functionality** – Export filtered/normalized data back to CSV or images of the plots.
+- **Annotations** – A sidebar for adding manual notes/markers at specific time windows.
