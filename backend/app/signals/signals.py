@@ -13,7 +13,7 @@ def process_signals(df: pd.DataFrame):
     cm_channel = {}
 
     for c in channel_cols:
-        if c.startwith("X3"):
+        if c.startswith("X3"):
             continue
         if c.startswith("X1") or "LEOG" in c:
             ecg_channels["LEFT_ECG"] = df[c].tolist()
