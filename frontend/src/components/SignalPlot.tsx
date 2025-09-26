@@ -1,4 +1,5 @@
 "use client";
+
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { PlotData, Layout } from "plotly.js";
@@ -10,6 +11,8 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Sliders, BarChart3, Activity } from "lucide-react";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
@@ -96,7 +99,6 @@ export default function SignalPlot({ data }: { data: any }) {
   ];
 
   const layout: Partial<Layout> = {
-    title: { text: "EEG + ECG Viewer" },
     grid: { rows: 2, columns: 1, pattern: "independent" },
     xaxis: { title: { text: "Time (s)" } },
     yaxis: { title: { text: normalize ? "EEG (z-score)" : "EEG (µV)" } },
@@ -104,92 +106,126 @@ export default function SignalPlot({ data }: { data: any }) {
       ? { matches: "x", title: { text: "Time (s)" } }
       : { title: { text: "Time (s)" } },
     yaxis2: { title: { text: "ECG / CM" } },
-    legend: { orientation: "h" },
-    plot_bgcolor: "#fff",
-    paper_bgcolor: "#fff",
+    legend: {
+      orientation: "h",
+      x: 0,
+      y: -0.3,
+      bgcolor: "rgba(255,255,255,0.8)",
+      bordercolor: "#e5e7eb",
+      borderwidth: 1,
+      font: { size: 10 },
+    },
+    plot_bgcolor: "transparent",
+    paper_bgcolor: "transparent",
   };
 
   return (
-    <div>
-      <div className="flex gap-4 mb-4 items-center">
-        <label>
-          <input
-            type="checkbox"
-            checked={normalize}
-            onChange={(e) => setNormalize(e.target.checked)}
-          />
-          Normalize EEG
-        </label>
-        <Button variant="outline" onClick={() => setSyncAxes(!syncAxes)}>
-          {syncAxes ? "🔓 Unsync Time Axes" : "🔗 Sync Time Axes"}
-        </Button>
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold tracking-tight">EEG + ECG Viewer</h1>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">Select EEG Channels</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="max-h-64 overflow-y-auto">
-            <DropdownMenuItem
-              onSelect={(e) => e.preventDefault()}
-              onClick={() => toggleAll("EEG")}
-            >
-              {selectedEEG.length ===
-              Object.keys(data.eeg_channels || {}).length
-                ? "Deselect All"
-                : "Select All"}
-            </DropdownMenuItem>
-            {Object.keys(data.eeg_channels || {}).map((ch) => (
-              <DropdownMenuCheckboxItem
-                key={ch}
-                checked={selectedEEG.includes(ch)}
-                onCheckedChange={() => toggleChannel(ch, "EEG")}
-                onSelect={(e) => e.preventDefault()}
+      <Card className="border border-zinc-200 dark:border-zinc-800 shadow-sm">
+        <CardContent className="flex flex-wrap items-center gap-2 p-2 sm:gap-3 sm:p-3">
+          <Button
+            variant={normalize ? "secondary" : "outline"}
+            onClick={() => setNormalize(!normalize)}
+            className="flex items-center gap-2 cursor-pointer text-sm sm:text-base"
+          >
+            <Activity className="w-4 h-4" />
+            {normalize ? "Disable Normalization" : "Normalize EEG"}
+          </Button>
+
+          <Button
+            variant={syncAxes ? "secondary" : "outline"}
+            onClick={() => setSyncAxes(!syncAxes)}
+            className="flex items-center gap-2 cursor-pointer text-sm sm:text-base"
+          >
+            <BarChart3 className="w-4 h-4" />
+            {syncAxes ? "Unsync Time Axes" : "Sync Time Axes"}
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 cursor-pointer text-sm sm:text-base"
               >
-                {ch}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+                <Sliders className="w-4 h-4" />
+                Select EEG Channels
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="max-h-64 overflow-y-auto">
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
+                onClick={() => toggleAll("EEG")}
+              >
+                {selectedEEG.length ===
+                Object.keys(data.eeg_channels || {}).length
+                  ? "Deselect All"
+                  : "Select All"}
+              </DropdownMenuItem>
+              {Object.keys(data.eeg_channels || {}).map((ch) => (
+                <DropdownMenuCheckboxItem
+                  key={ch}
+                  checked={selectedEEG.includes(ch)}
+                  onCheckedChange={() => toggleChannel(ch, "EEG")}
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  {ch}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline">Select ECG/CM Channels</Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="max-h-64 overflow-y-auto">
-            <DropdownMenuItem
-              onSelect={(e) => e.preventDefault()}
-              onClick={() => toggleAll("ECG")}
-            >
-              {selectedECG.length ===
-              [
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex items-center gap-2 cursor-pointer text-sm sm:text-base"
+              >
+                <Sliders className="w-4 h-4" />
+                Select ECG/CM Channels
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="max-h-64 overflow-y-auto">
+              <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
+                onClick={() => toggleAll("ECG")}
+              >
+                {selectedECG.length ===
+                [
+                  ...Object.keys(data.ecg_channels || {}),
+                  ...Object.keys(data.cm_channel || {}),
+                ].length
+                  ? "Deselect All"
+                  : "Select All"}
+              </DropdownMenuItem>
+              {[
                 ...Object.keys(data.ecg_channels || {}),
                 ...Object.keys(data.cm_channel || {}),
-              ].length
-                ? "Deselect All"
-                : "Select All"}
-            </DropdownMenuItem>
-            {[
-              ...Object.keys(data.ecg_channels || {}),
-              ...Object.keys(data.cm_channel || {}),
-            ].map((ch) => (
-              <DropdownMenuCheckboxItem
-                key={ch}
-                checked={selectedECG.includes(ch)}
-                onCheckedChange={() => toggleChannel(ch, "ECG")}
-                onSelect={(e) => e.preventDefault()}
-              >
-                {ch}
-              </DropdownMenuCheckboxItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+              ].map((ch) => (
+                <DropdownMenuCheckboxItem
+                  key={ch}
+                  checked={selectedECG.includes(ch)}
+                  onCheckedChange={() => toggleChannel(ch, "ECG")}
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  {ch}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </CardContent>
+      </Card>
 
-      <Plot
-        data={[...eegTraces, ...ecgTraces]}
-        layout={layout}
-        style={{ width: "100%", height: "85vh" }}
-      />
+      <Card className="border border-zinc-200 dark:border-zinc-800 shadow-md">
+        <CardContent className="p-2">
+          <Plot
+            data={[...eegTraces, ...ecgTraces]}
+            layout={layout}
+            style={{ width: "100%", height: "80vh" }}
+          />
+        </CardContent>
+      </Card>
     </div>
   );
 }
