@@ -7,6 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
@@ -35,6 +36,19 @@ export default function SignalPlot({ data }: { data: any }) {
       setSelectedECG((prev) =>
         prev.includes(ch) ? prev.filter((c) => c !== ch) : [...prev, ch]
       );
+    }
+  };
+
+  const toggleAll = (type: "EEG" | "ECG") => {
+    if (type === "EEG") {
+      const allEEG = Object.keys(data.eeg_channels || {});
+      setSelectedEEG(selectedEEG.length === allEEG.length ? [] : allEEG);
+    } else {
+      const allECG = [
+        ...Object.keys(data.ecg_channels || {}),
+        ...Object.keys(data.cm_channel || {}),
+      ];
+      setSelectedECG(selectedECG.length === allECG.length ? [] : allECG);
     }
   };
 
@@ -107,11 +121,17 @@ export default function SignalPlot({ data }: { data: any }) {
             <Button variant="outline">Select EEG Channels</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="max-h-64 overflow-y-auto">
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => toggleAll("EEG")}>
+              {selectedEEG.length === Object.keys(data.eeg_channels || {}).length
+                ? "Deselect All"
+                : "Select All"}
+            </DropdownMenuItem>
             {Object.keys(data.eeg_channels || {}).map((ch) => (
               <DropdownMenuCheckboxItem
                 key={ch}
                 checked={selectedEEG.includes(ch)}
                 onCheckedChange={() => toggleChannel(ch, "EEG")}
+                onSelect={(e) => e.preventDefault()} 
               >
                 {ch}
               </DropdownMenuCheckboxItem>
@@ -124,12 +144,22 @@ export default function SignalPlot({ data }: { data: any }) {
             <Button variant="outline">Select ECG/CM Channels</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="max-h-64 overflow-y-auto">
+            <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={() => toggleAll("ECG")}>
+              {selectedECG.length ===
+              [
+                ...Object.keys(data.ecg_channels || {}),
+                ...Object.keys(data.cm_channel || {}),
+              ].length
+                ? "Deselect All"
+                : "Select All"}
+            </DropdownMenuItem>
             {[...Object.keys(data.ecg_channels || {}), ...Object.keys(data.cm_channel || {})].map(
               (ch) => (
                 <DropdownMenuCheckboxItem
                   key={ch}
                   checked={selectedECG.includes(ch)}
                   onCheckedChange={() => toggleChannel(ch, "ECG")}
+                  onSelect={(e) => e.preventDefault()} 
                 >
                   {ch}
                 </DropdownMenuCheckboxItem>
