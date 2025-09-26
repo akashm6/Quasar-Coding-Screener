@@ -9,3 +9,7 @@ async def process_csv(csv_file: UploadFile = File(...)):
     df = pd.read_csv(csv_file.file, comment="#")
     result = process_signals(df)
     return result
+
+@router.get("/")
+def health_check():
+    return "Backend running!"
