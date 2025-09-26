@@ -2,11 +2,20 @@
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { PlotData, Layout } from "plotly.js";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
 export default function SignalPlot({ data }: { data: any }) {
   const [normalize, setNormalize] = useState(false);
+  const [selectedEEG, setSelectedEEG] = useState<string[]>([]);
+  const [selectedECG, setSelectedECG] = useState<string[]>([]);
 
   if (!data) return <p>No data available</p>;
 
@@ -17,50 +26,65 @@ export default function SignalPlot({ data }: { data: any }) {
     return arr.map((v) => (v - mean) / (std || 1));
   };
 
-  const eegTraces: Partial<PlotData>[] = Object.keys(data.eeg_channels || {}).map((ch) => ({
-    name: ch,
-    x: data.time,
-    y: normalizeArray(data.eeg_channels[ch]),
-    type: "scatter" as const,
-    mode: "lines" as const,
-    line: { width: 0.8 },
-    xaxis: "x1",
-    yaxis: "y1",
-  }));
+  const toggleChannel = (ch: string, type: "EEG" | "ECG") => {
+    if (type === "EEG") {
+      setSelectedEEG((prev) =>
+        prev.includes(ch) ? prev.filter((c) => c !== ch) : [...prev, ch]
+      );
+    } else {
+      setSelectedECG((prev) =>
+        prev.includes(ch) ? prev.filter((c) => c !== ch) : [...prev, ch]
+      );
+    }
+  };
+
+  const eegTraces: Partial<PlotData>[] = Object.keys(data.eeg_channels || {})
+    .filter((ch) => selectedEEG.length === 0 || selectedEEG.includes(ch))
+    .map((ch) => ({
+      name: ch,
+      x: data.time,
+      y: normalizeArray(data.eeg_channels[ch]),
+      type: "scatter" as const,
+      mode: "lines" as const,
+      line: { width: 0.8 },
+      xaxis: "x1",
+      yaxis: "y1",
+    }));
 
   const ecgTraces: Partial<PlotData>[] = [
-    ...Object.keys(data.ecg_channels || {}).map((ch) => ({
-      name: ch,
-      x: data.time,
-      y: data.ecg_channels[ch],
-      type: "scatter" as const,
-      mode: "lines" as const,
-      line: { width: 1.5 },
-      xaxis: "x2",
-      yaxis: "y2",
-    })),
-    ...Object.keys(data.cm_channel || {}).map((ch) => ({
-      name: ch,
-      x: data.time,
-      y: data.cm_channel[ch],
-      type: "scatter" as const,
-      mode: "lines" as const,
-      line: { width: 1.5, dash: "dot" },
-      xaxis: "x2",
-      yaxis: "y2",
-    })),
+    ...Object.keys(data.ecg_channels || {})
+      .filter((ch) => selectedECG.length === 0 || selectedECG.includes(ch))
+      .map((ch) => ({
+        name: ch,
+        x: data.time,
+        y: data.ecg_channels[ch],
+        type: "scatter" as const,
+        mode: "lines" as const,
+        line: { width: 1.5 },
+        xaxis: "x2",
+        yaxis: "y2",
+      })),
+    ...Object.keys(data.cm_channel || {})
+      .filter((ch) => selectedECG.length === 0 || selectedECG.includes(ch))
+      .map((ch) => ({
+        name: ch,
+        x: data.time,
+        y: data.cm_channel[ch],
+        type: "scatter" as const,
+        mode: "lines" as const,
+        line: { width: 1.5, dash: "dot" },
+        xaxis: "x2",
+        yaxis: "y2",
+      })),
   ];
 
   const layout: Partial<Layout> = {
     title: { text: "EEG + ECG Viewer" },
     grid: { rows: 2, columns: 1, pattern: "independent" },
-
     xaxis: { title: { text: "Time (s)" } },
     yaxis: { title: { text: normalize ? "EEG (z-score)" : "EEG (µV)" } },
-
     xaxis2: { title: { text: "Time (s)" } },
     yaxis2: { title: { text: "ECG / CM" } },
-
     legend: { orientation: "h" },
     plot_bgcolor: "#fff",
     paper_bgcolor: "#fff",
@@ -68,7 +92,7 @@ export default function SignalPlot({ data }: { data: any }) {
 
   return (
     <div>
-      <div className="flex gap-4 mb-4">
+      <div className="flex gap-4 mb-4 items-center">
         <label>
           <input
             type="checkbox"
@@ -77,8 +101,49 @@ export default function SignalPlot({ data }: { data: any }) {
           />
           Normalize EEG
         </label>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">Select EEG Channels</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="max-h-64 overflow-y-auto">
+            {Object.keys(data.eeg_channels || {}).map((ch) => (
+              <DropdownMenuCheckboxItem
+                key={ch}
+                checked={selectedEEG.includes(ch)}
+                onCheckedChange={() => toggleChannel(ch, "EEG")}
+              >
+                {ch}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline">Select ECG/CM Channels</Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="max-h-64 overflow-y-auto">
+            {[...Object.keys(data.ecg_channels || {}), ...Object.keys(data.cm_channel || {})].map(
+              (ch) => (
+                <DropdownMenuCheckboxItem
+                  key={ch}
+                  checked={selectedECG.includes(ch)}
+                  onCheckedChange={() => toggleChannel(ch, "ECG")}
+                >
+                  {ch}
+                </DropdownMenuCheckboxItem>
+              )
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-      <Plot data={[...eegTraces, ...ecgTraces]} layout={layout} style={{ width: "100%", height: "85vh" }} />
+
+      <Plot
+        data={[...eegTraces, ...ecgTraces]}
+        layout={layout}
+        style={{ width: "100%", height: "85vh" }}
+      />
     </div>
   );
 }
