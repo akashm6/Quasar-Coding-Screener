@@ -1,22 +1,26 @@
 "use client";
-// Visualization viewing page logic goes here
 import { useEffect, useState } from "react";
 import SignalPlot from "../../components/SignalPlot";
 
+interface SignalData {
+  time: number[];
+  eeg_channels: Record<string, number[]>;
+  ecg_channels: Record<string, number[]>;
+  cm_channel: Record<string, number[]>;
+}
+
 export default function Viewer() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<SignalData | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("signalData");
-    console.log(saved)
     if (saved) {
-      setData(JSON.parse(saved));
+      setData(JSON.parse(saved) as SignalData);
     }
   }, []);
 
   return (
     <div className="p-6">
-  
       {!data ? <p>Loading...</p> : <SignalPlot data={data} />}
     </div>
   );

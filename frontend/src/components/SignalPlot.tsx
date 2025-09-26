@@ -16,7 +16,14 @@ import { Sliders, BarChart3, Activity } from "lucide-react";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
-export default function SignalPlot({ data }: { data: any }) {
+interface SignalData {
+  time: number[];
+  eeg_channels: Record<string, number[]>;
+  ecg_channels: Record<string, number[]>;
+  cm_channel: Record<string, number[]>;
+}
+
+export default function SignalPlot({ data }: { data: SignalData }) {
   const [normalize, setNormalize] = useState(false);
   const [selectedEEG, setSelectedEEG] = useState<string[]>([]);
   const [selectedECG, setSelectedECG] = useState<string[]>([]);
