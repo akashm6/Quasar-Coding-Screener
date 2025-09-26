@@ -16,7 +16,7 @@ export default function Viewer() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">EEG + ECG Viewer</h1>
+  
       {!data ? <p>Loading...</p> : <SignalPlot data={data} />}
     </div>
   );
