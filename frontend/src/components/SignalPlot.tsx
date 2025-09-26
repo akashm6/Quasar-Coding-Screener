@@ -1,72 +1,69 @@
+"use client";
 import dynamic from "next/dynamic";
-import { PlotData, Layout } from "plotly.js";
 import { useState } from "react";
+import { PlotData, Layout } from "plotly.js";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
 export default function SignalPlot({ data }: { data: any }) {
   const [normalize, setNormalize] = useState(false);
-  const [hidden, setHidden] = useState<Record<string, boolean>>({});
 
   if (!data) return <p>No data available</p>;
 
   const normalizeArray = (arr: number[]) => {
     if (!normalize) return arr;
     const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
-    const std = Math.sqrt(
-      arr.reduce((a, b) => a + (b - mean) ** 2, 0) / arr.length
-    );
+    const std = Math.sqrt(arr.reduce((a, b) => a + (b - mean) ** 2, 0) / arr.length);
     return arr.map((v) => (v - mean) / (std || 1));
   };
 
-  const traces: Partial<PlotData>[] = [
-    ...Object.keys(data.eeg_channels || {}).map((ch) => ({
-      name: ch,
-      x: data.time,
-      y: normalize
-        ? normalizeArray(data.eeg_channels[ch])
-        : data.eeg_channels[ch],
-      type: "scatter" as const,
-      mode: "lines" as const,
-      yaxis: "y1",
-      visible: hidden[ch] ? ("legendonly" as const) : true,
-    })),
-    // ECG stays untouched
+  const eegTraces: Partial<PlotData>[] = Object.keys(data.eeg_channels || {}).map((ch) => ({
+    name: ch,
+    x: data.time,
+    y: normalizeArray(data.eeg_channels[ch]),
+    type: "scatter" as const,
+    mode: "lines" as const,
+    line: { width: 0.8 },
+    xaxis: "x1",
+    yaxis: "y1",
+  }));
+
+  const ecgTraces: Partial<PlotData>[] = [
     ...Object.keys(data.ecg_channels || {}).map((ch) => ({
       name: ch,
       x: data.time,
       y: data.ecg_channels[ch],
       type: "scatter" as const,
       mode: "lines" as const,
+      line: { width: 1.5 },
+      xaxis: "x2",
       yaxis: "y2",
-      visible: hidden[ch] ? ("legendonly" as const) : true,
+    })),
+    ...Object.keys(data.cm_channel || {}).map((ch) => ({
+      name: ch,
+      x: data.time,
+      y: data.cm_channel[ch],
+      type: "scatter" as const,
+      mode: "lines" as const,
+      line: { width: 1.5, dash: "dot" },
+      xaxis: "x2",
+      yaxis: "y2",
     })),
   ];
 
-  const [ranges, setRanges] = useState<{
-    x?: [number, number];
-    y?: [number, number];
-  }>({});
-
-  const handleRelayout = (event: any) => {
-    if (event["xaxis.range[0]"] && event["xaxis.range[1]"]) {
-      setRanges({
-        x: [event["xaxis.range[0]"], event["xaxis.range[1]"]],
-        y: [event["yaxis.range[0]"], event["yaxis.range[1]"]],
-      });
-    }
-  };
-
   const layout: Partial<Layout> = {
     title: { text: "EEG + ECG Viewer" },
-    xaxis: { title: { text: "Time (s)" }, range: ranges.x },
-    yaxis: { title: { text: "EEG (µV)" }, range: ranges.y },
-    yaxis2: {
-      title: { text: "ECG/CM" },
-      overlaying: "y",
-      side: "right",
-      autorange: true,
-    },
+    grid: { rows: 2, columns: 1, pattern: "independent" },
+
+    xaxis: { title: { text: "Time (s)" } },
+    yaxis: { title: { text: normalize ? "EEG (z-score)" : "EEG (µV)" } },
+
+    xaxis2: { title: { text: "Time (s)" } },
+    yaxis2: { title: { text: "ECG / CM" } },
+
+    legend: { orientation: "h" },
+    plot_bgcolor: "#fff",
+    paper_bgcolor: "#fff",
   };
 
   return (
@@ -81,13 +78,7 @@ export default function SignalPlot({ data }: { data: any }) {
           Normalize EEG
         </label>
       </div>
-      <Plot
-        data={traces}
-        layout={layout}
-        style={{ width: "100%", height: "80vh" }}
-        useResizeHandler
-        config={{ responsive: true }}
-      />
+      <Plot data={[...eegTraces, ...ecgTraces]} layout={layout} style={{ width: "100%", height: "85vh" }} />
     </div>
   );
 }
