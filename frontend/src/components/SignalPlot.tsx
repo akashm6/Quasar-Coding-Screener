@@ -109,12 +109,16 @@ export default function SignalPlot({ data }: { data: any }) {
     legend: {
       orientation: "h",
       x: 0,
-      y: -0.3,
+      xanchor: "left",
+      y: 1.15,
+      yanchor: "bottom",
       bgcolor: "rgba(255,255,255,0.8)",
       bordercolor: "#e5e7eb",
       borderwidth: 1,
       font: { size: 10 },
     },
+
+    margin: { t: 80, r: 20, l: 40, b: 50 },
     plot_bgcolor: "transparent",
     paper_bgcolor: "transparent",
   };
