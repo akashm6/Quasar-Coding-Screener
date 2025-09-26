@@ -71,7 +71,7 @@ export default function FileUploader() {
       <Button
         onClick={handleUpload}
         disabled={loading || !selectedFile}
-        className="w-full hover:shadow-md hover:shadow-indigo-500/30 transition"
+        className="w-full hover:shadow-md hover:shadow-indigo-500/30 transition cursor-pointer"
       >
         {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
         {loading ? "Uploading..." : "Upload"}
