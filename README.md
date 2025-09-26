@@ -8,8 +8,8 @@ This repository is my submission for the QUASAR Software Intern Coding Screener.
 
 ## Demo & Links
 
-- **Live App**: [Deployed Link](link_here)
-- **Demo Video**: [Demo](link_here)
+- **Live App**: [Deployed Link](https://quasar-coding-screener.vercel.app/)
+- **Demo Video**: [Demo](https://www.youtube.com/watch?v=PKlduijkDb4)
 
 ## Key Features
 
