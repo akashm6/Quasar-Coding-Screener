@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 export default function FileUploader() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
+  const router = useRouter()
   const BACKEND_ROUTE =
     process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
@@ -39,7 +40,8 @@ export default function FileUploader() {
         return;
       }
       const data = await res.json();
-      console.log("upload data: ", data);
+      localStorage.setItem("signalData", JSON.stringify(data));
+      router.push("/viewer")
       // API logic goes here
     } catch (err) {
       console.error(err);
