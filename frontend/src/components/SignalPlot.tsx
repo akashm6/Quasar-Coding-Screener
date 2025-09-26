@@ -1,28 +1,30 @@
-// Modular wrapper logic for Plotly visualizations
 import dynamic from "next/dynamic";
+import { PlotData, Layout } from "plotly.js";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
 
 export default function SignalPlot({ data }: { data: any }) {
-  if (!data) return null;
+  if (!data) return <p>No data available</p>;
 
-  const traces: Partial<Plotly.PlotData>[] = Object.keys(data.channels).map(
-    (ch) => ({
-      name: ch,
-      x: data.time,
-      y: data.channels[ch],
-      type: "scatter" as const,
-      mode: "lines" as const,
-    })
-  );
+  // pass in already formatted traces from the backend
+  const traces: Partial<PlotData>[] = data.traces;
+
+  const layout: Partial<Layout> = {
+    title: { text: "EEG + ECG Viewer" },
+    xaxis: { title: { text: "Time (s)" } },
+    yaxis: { title: { text: "EEG (µV)" }, autorange: true },
+    yaxis2: {
+      title: { text: "ECG/EOG" },
+      overlaying: "y",
+      side: "right",
+      autorange: true,
+    },
+  };
 
   return (
     <Plot
-      data={traces as Plotly.Data[]}
-      layout={{
-        title: { text: "EEG + ECG Viewer" },
-        xaxis: { title: { text: "Time (s)" } },
-      }}
+      data={traces}
+      layout={layout}
       style={{ width: "100%", height: "80vh" }}
     />
   );
